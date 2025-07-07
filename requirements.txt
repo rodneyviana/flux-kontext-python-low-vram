@@ -1,0 +1,10 @@
+# pip install torch torchvision torchaudio xformers --index-url https://download.pytorch.org/whl/cu128
+# diffusers
+git+https://github.com/huggingface/diffusers.git
+accelerate
+transformers
+protobuf
+sentencepiece
+gradio
+peft
+pynvml
