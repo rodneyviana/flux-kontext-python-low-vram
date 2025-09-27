@@ -192,6 +192,7 @@ generated_images/
 *.bmp
 *.tiff
 *.webp
+*.out
 
 # Temporary files
 *.tmp

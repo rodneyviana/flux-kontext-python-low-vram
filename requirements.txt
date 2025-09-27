@@ -8,3 +8,5 @@ sentencepiece
 gradio
 peft
 pynvml
+psutil
+python-dotenv

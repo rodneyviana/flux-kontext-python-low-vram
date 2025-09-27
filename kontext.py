@@ -1,8 +1,14 @@
+import json
+import os
 import gradio as gr
 import PIL.Image
 from model_utils import load_model, run_prompt
 from cuda_utils import garbage_collect
 import time
+from PIL.PngImagePlugin import PngInfo
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Global pipeline variable
 pipe = None
@@ -33,10 +39,34 @@ def process_img2img(input_image: PIL.Image.Image, prompt: str,
         
         # Run inference with custom parameters
         result_image = run_prompt(pipeline, prompt, input_image, guidance_scale, num_steps)
+
+        # create a JSON object to store prompt and parameters
+        params = {
+            "prompt": prompt,
+            "guidance_scale": guidance_scale,
+            "num_steps": num_steps
+        }
         
         # Clean up GPU memory
         garbage_collect()
+        # generate a filename that starts with kontext_, includes timestamb and ends with .png
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        filename = f"kontext_{timestamp}.png"
+        # Save the result image to the specified output directory
+        output_dir = os.getenv("OUTPUT_DIR", "/tmp")
+        try:
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            full_path = os.path.join(output_dir, filename)
+            # Save the image adding params as image metadata
+            metadata = PngInfo()
+            metadata.add_text("prompt", json.dumps(params))
+            result_image.save(full_path, format="PNG", pnginfo=metadata)
+            print(f"Image saved as {filename} in {output_dir}")
+        except Exception as e:
+            print(f"Error saving image: {str(e)}")
         
+
         return result_image
     
     except Exception as e:
@@ -128,8 +158,8 @@ if __name__ == "__main__":
     interface = create_interface()
     interface.queue()
     _, local_url, shared_url = interface.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
+        server_name=os.getenv("SERVER_NAME", "0.0.0.0"),
+        server_port=int(os.getenv("SERVER_PORT", 7860)),
         share=True,
         prevent_thread_lock=True
     )
